@@ -1,4 +1,4 @@
-# Gestos Spotify - AI Gesture Control
+# AI Gestures Spotify 
 
 Control Spotify using hand gestures detected by webcam using Computer Vision + Machine Learning.
 
@@ -22,8 +22,8 @@ Control Spotify using hand gestures detected by webcam using Computer Vision + M
 ## Installation
 
 ```bash
-git clone https://github.com/tu-usuario/Gestos-Spotify.git
-cd Gestos-Spotify
+git clone https://github.com/lechartfon/AI-Gestures-Spotify.git
+cd AI-Gestures-Spotify
 pip install -r requirements.txt
 ```
 
@@ -42,7 +42,7 @@ python gesture_detector.py
 ## Project Structure
 
 ```
-Gestos-Spotify/
+AI-Gestures-Spotify/
 ├── gesture_detector.py     # Complete pipeline: preprocessing, training, inference
 ├── utils/
 │   └── dataset_tools.py    # Utilities: resize, data augmentation

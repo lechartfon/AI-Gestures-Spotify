@@ -12,6 +12,18 @@ eggs/
 .eggs/
 lib/
 lib64/
+
+# Model & large artifacts
+gesture_model.pkl
+confusion_matrix_final.png
+
+dataset-kaggle2/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 parts/
 sdist/
 var/
@@ -43,7 +55,7 @@ Thumbs.db
 *.model
 
 # Generated images
-Matriz_confusion_final.png
+confusion_matrix_final.png
 *.png
 
 # Dataset cache / processed

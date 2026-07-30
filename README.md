@@ -1,29 +1,25 @@
-# Gestos-Spotify
+# Gestos Spotify - AI Gesture Control
 
-Control de Spotify mediante gestos de mano usando webcam, visión por computadora y Machine Learning.
+Control Spotify using hand gestures detected by webcam using Computer Vision + Machine Learning.
 
-## Descripción
+## Demo
 
-Este proyecto permite controlar Spotify (Play/Pause, Siguiente/Anterior, Subir/Bajar volumen) mediante gestos de mano capturados por webcam. Utiliza extracción de características HOG + clasificador RandomForest para reconocer 6 gestos distintos.
+| Gesture | Action |
+|---------|--------|
+| ✋ Fist / Palm | Play / Pause |
+| 👆 Index up | Next song |
+| 👇 Index down | Previous song |
+| ✌️ Peace (index + middle) | Volume up |
+| 🤘 Rock (index + pinky) | Volume down |
 
-## Gestos soportados
-
-| Gesto | Acción Spotify | Tecla multimedia |
-|-------|----------------|------------------|
-| `play_stop` | Play / Pause | `Play/Pause` |
-| `siguienteCancion` | Siguiente canción | `Next Track` |
-| `anteriorCancion` | Canción anterior | `Previous Track` |
-| `subirVolumen` | Subir volumen | `Volume Up` (x5) |
-| `bajarVolumen` | Bajar volumen | `Volume Down` (x5) |
-| `up` | Play / Pause (alternativo) | `Play/Pause` |
-
-## Requisitos
+## Requirements
 
 - Python 3.8+
 - Webcam
-- Spotify abierto (en segundo plano funciona en Windows)
+- Windows (uses Windows multimedia keys)
+- Spotify open (in foreground or background)
 
-## Instalación
+## Installation
 
 ```bash
 git clone https://github.com/tu-usuario/Gestos-Spotify.git
@@ -31,74 +27,102 @@ cd Gestos-Spotify
 pip install -r requirements.txt
 ```
 
-## Uso
+## Usage
 
 ```bash
-python detector_gestos.py
+python gesture_detector.py
 ```
 
-Controles:
-- Coloca la mano dentro del rectángulo verde
-- Presiona **Q** para salir
+1. The first time, train the model (takes ~30-60s depending on CPU).
+2. The webcam window opens with a green rectangle.
+3. Place your hand inside the rectangle.
+4. Perform the gestures shown in the table above.
+5. Press **Q** to exit.
 
-## Estructura del proyecto
+## Project Structure
 
 ```
 Gestos-Spotify/
-├── detector_gestos.py          # Aplicación principal
-├── requirements.txt            # Dependencias Python
-├── .gitignore                  # Archivos ignorados por Git
-├── dataset-kaggle2/            # Dataset principal (5 clases, ~2.6k imágenes)
-│   └── images/
-│       ├── anteriorCancion/
-│       ├── bajarVolumen/
-│       ├── play_stop/
-│       ├── siguienteCancion/
-│       └── subirVolumen/
-├── dataset-Manual/             # Dataset manual capturado (6 clases, ~150 imágenes)
-│   ├── anteriorCancion/
-│   ├── bajarVolumen/
-│   ├── nada/
-│   ├── play_stop/
-│   ├── siguienteCancion/
-│   └── subirVolumen/
-└── scripts/                    # Utilidades de preprocesamiento
-    ├── redimensionar_dataset.py    # Redimensionar imágenes a 64x64
-    ├── scriptRotar180.py           # Rotar 180° (data augmentation)
-    ├── scriptRotar90.py            # Rotar 90° (data augmentation)
-    └── scriptVoltear.py            # Voltear horizontal (data augmentation)
+├── gesture_detector.py     # Complete pipeline: preprocessing, training, inference
+├── utils/
+│   └── dataset_tools.py    # Utilities: resize, data augmentation
+├── requirements.txt
+├── .gitignore
+└── README.md
 ```
 
-## Pipeline técnico
+> **Note:** The dataset and the trained model (`gesture_model.pkl`) are in `.gitignore` due to their size. Download the dataset from Kaggle or capture your own images.
 
-1. **Preprocesamiento**: BGR → Gris → Resize 64×64 → Gaussian Blur → Otsu Threshold → Normalización
-2. **Extracción de características**: HOG (Histogram of Oriented Gradients)
-   - 9 orientaciones, cells 8×8, blocks 2×2, L2-Hys normalization
-3. **Clasificación**: RandomForest (200 árboles, max_depth=None, min_samples_leaf=2)
-4. **Detección tiempo real**: Suavizado temporal (6 frames) + umbral de confianza (35%)
-5. **Control Spotify**: pyautogui con teclas multimedia (cooldown 1s por gesto)
+## Dataset
 
-## Reentrenamiento
+The code automatically detects the folder structure:
 
-El modelo se reentrena automáticamente si no existe `modelo_gestos.pkl` o si el usuario confirma. Para forzar reentrenamiento:
+```
+dataset-kaggle2/           # Kaggle structure (with images/ subfolder)
+└── images/
+    ├── previous_song/
+    ├── volume_down/
+    ├── play_stop/
+    ├── next_song/
+    └── volume_up/
+```
+
+## Data Preparation (`utils/dataset_tools.py`)
 
 ```bash
-rm modelo_gestos.pkl
-python detector_gestos.py
+# Resize entire dataset to 64x64
+python utils/dataset_tools.py resize dataset-kaggle2
+
+# Data augmentation: rotate 180° and flip
+python utils/dataset_tools.py augment dataset-kaggle2/images/next_song dataset-kaggle2/images/previous_song --rotate 180 --flip
 ```
 
-## Scripts de utilidad
+**Available commands:**
+- `resize <source> [destination] [width] [height]` — Resizes all images
+- `augment <source> <destination> --rotate 90|180|270 --flip` — Increases dataset with rotations/flip
 
-```bash
-# Redimensionar dataset
-python scripts/redimensionar_dataset.py dataset-kaggle2
+## Technical Pipeline
 
-# Data augmentation (ejemplos hardcodeados en cada script)
-python scripts/scriptRotar180.py
-python scripts/scriptRotar90.py
-python scripts/scriptVoltear.py
+| Stage | Description |
+|-------|-------------|
+| **Preprocessing** | BGR → Gray → Resize 64×64 → Gaussian Blur → Otsu → Normalize → HOG (9 ori, 8×8 cells, 2×2 blocks) |
+| **Model** | RandomForestClassifier (200 trees, max_depth=None, min_samples_leaf=2) |
+| **Evaluation** | 80/20 stratified split, confusion matrix, classification report |
+| **Inference** | Webcam → ROI → Same pipeline → Predict_proba → Temporal smoothing (6 frames) → Cooldown 1s |
+
+## Customization
+
+Edit constants at the beginning of `gesture_detector.py`:
+
+```python
+DATASET_PATH = "dataset-kaggle2/"   # Path to dataset
+MODEL_PATH   = "gesture_model.pkl"  # Model file
+IMG_SIZE     = (64, 64)             # Input resolution
+COOLDOWN     = 1.0                  # Seconds between repeated gestures
+THRESHOLD_FRAMES = 6                # Consecutive frames to confirm
+MIN_CONFIDENCE = 0.35               # Minimum probability threshold
 ```
 
-## Licencia
+## Main dependencies
 
-MIT
+| Package | Use |
+|---------|-----|
+| `opencv-python` | Webcam capture, image processing |
+| `scikit-image` | HOG features |
+| `scikit-learn` | RandomForest, metrics |
+| `joblib` | Model serialization |
+| `pyautogui` | Simulate multimedia keys |
+| `matplotlib` | Confusion matrix visualization |
+
+## Troubleshooting
+
+| Problem | Solution |
+|----------|----------|
+| Webcam won't open | Check camera index (`cv2.VideoCapture(0)` → `1`, `2`...) |
+| Gestures not detected | Improve lighting, uniform background, hand inside rectangle |
+| Spotify won't respond | Ensure Spotify is open and accepts multimedia keys |
+| Low model accuracy | Add more images to dataset, retrain by deleting `gesture_model.pkl` |
+
+## License
+
+MIT License - Free for personal and commercial use.

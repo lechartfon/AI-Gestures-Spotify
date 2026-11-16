@@ -6,11 +6,11 @@ Control Spotify using hand gestures detected by webcam using Computer Vision + M
 
 | Gesture | Action |
 |---------|--------|
-| ✋ Fist / Palm | Play / Pause |
-| 👆 Index up | Next song |
-| 👇 Index down | Previous song |
-| ✌️ Peace (index + middle) | Volume up |
-| 🤘 Rock (index + pinky) | Volume down |
+| ✋ Palm | Play / Pause |
+| 👉 Next | Next song |
+| 👈 Before | Previous song |
+| 👍 Good | Volume up |
+| 👎 Bad | Volume down |
 
 ## Requirements
 
